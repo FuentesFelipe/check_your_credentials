@@ -1,5 +1,6 @@
 import argparse
 import sys, mmap
+import difflib
 
 class bcolors:
     HEADER = '\033[95m'
@@ -22,6 +23,10 @@ def check_if_string_in_file(file_name, string_to_search):
                 return True
     return False
 
+my_file = open('rockyou.txt', "r", encoding="ISO-8859-1")
+content_list = my_file. readlines()
+print("largo: ", len(content_list))
+
 try:
 
     parser = argparse.ArgumentParser(description='Encuentra tu password en diccionarios públicos')
@@ -34,13 +39,14 @@ try:
     if args['dictio']:
 
         dictionary = args['dictio']
-    
+            
     else:
         dictionary= 'rockyou.txt'
     
-    # Check if string 'is' is found in file 'sample.txt'
+        # Check if string 'is' is found in file 'sample.txt'
     if check_if_string_in_file('rockyou.txt', password):
-        print('Yes, string found in file')
+        result = difflib.get_close_matches(password, content_list)
+        print('Yes, string found in file. ', result)
     else:
         print('String not found in file')        
    
