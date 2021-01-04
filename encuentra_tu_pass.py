@@ -1,6 +1,9 @@
 import argparse
-import sys, mmap
-import difflib
+import sys
+#import difflib
+import requests
+import os
+from tqdm import tqdm
 
 class bcolors:
     HEADER = '\033[95m'
@@ -11,6 +14,52 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+
+print( bcolors.OKGREEN + 
+""" 
+              _____ _               _     __   __                ______              
+             /  __ \ |             | |    \ \ / /                | ___ \            
+             | /  \/ |__   ___  ___| | __  \ V /___  _   _ _ __  | |_/ /_ _ ___ ___  
+             | |   | '_ \ / _ \/ __| |/ /   \ // _ \| | | | '__| |  __/ _` / __/ __| 
+             | \__/\ | | |  __/ (__|   <    | | (_) | |_| | |    | | | (_| \__ \__ \ 
+              \____/_| |_|\___|\___|_|\_\   \_/\___/ \__,_|_|    \_|  \__,_|___/___/ 
+                        
+                        By Felipe Fuentes - Universidad Tecnologica Metropolitana
+
+                                                                                    """) 
+
+
+try: 
+    from googlesearch import search 
+except ImportError:  
+    print("No module named 'google' found") 
+
+def download(url: str, dest_folder: str):
+    if not os.path.exists(dest_folder):
+        os.makedirs(dest_folder)  # create folder if it does not exist
+
+    filename = url.split('/')[-1].replace(" ", "_")  # be careful with file names
+    file_path = os.path.join(dest_folder, filename)
+
+    r = requests.get(url, stream=True)
+    if r.ok:
+        print(bcolors.WARNING + "saving as " + bcolors.OKBLUE + filename)
+        total_size_in_bytes= int(r.headers.get('content-length', 0))
+        progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
+
+        with open(file_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024 * 8):
+                progress_bar.update(len(chunk))
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
+                    os.fsync(f.fileno())
+        progress_bar.close()
+        if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
+            print("ERROR, something went wrong")
+    else:  # HTTP status code 4XX/5XX
+        print("Download failed: status code {}\n{}".format(r.status_code, r.text))
 
 def check_if_string_in_file(file_name, string_to_search):
     """ Check if any line in the file contains given string """
@@ -23,32 +72,42 @@ def check_if_string_in_file(file_name, string_to_search):
                 return True
     return False
 
-my_file = open('rockyou.txt', "r", encoding="ISO-8859-1")
-content_list = my_file. readlines()
-print("largo: ", len(content_list))
+parser = argparse.ArgumentParser(description='Encuentra tu password en diccionarios públicos')
+parser.add_argument('-p', '--pass', required=True, help=' -p mi_password ')
+parser.add_argument('-d', '--download', action="store_true" ,help=' Usa la flag -d si quieres descargar los wordlists')
+args = vars(parser.parse_args())
 
+password = args['pass']
+download_param = args['download']
+path_wordlist = "Wordlists"
+results = 0
 try:
 
-    parser = argparse.ArgumentParser(description='Encuentra tu password en diccionarios públicos')
-    parser.add_argument('-p', '--pass', required=True, help=' -p mi_password ')
-    parser.add_argument('-d', '--dictio', help=' -d dictionary.txt')
+    query = '"' + str(password) + '"wordlist" "filetype:txt'
 
-    args = vars(parser.parse_args())
-    password = args['pass']
+    for j in search(query, tld="co.in", num=10, stop=10, pause=2): 
+        print(bcolors.OKBLUE + "URL ->",j) 
+        results += 1
 
-    if args['dictio']:
+        if download_param:
+                
+            if j.find('/'):
+                filename = j.rsplit('/', 1)[1]
+                download(j, dest_folder=path_wordlist)
 
-        dictionary = args['dictio']
-            
-    else:
-        dictionary= 'rockyou.txt'
+    print('\n',"="*60,'\n',bcolors.HEADER + str(results),"diccionarios encontrados.",'\n')
     
-        # Check if string 'is' is found in file 'sample.txt'
-    if check_if_string_in_file('rockyou.txt', password):
-        result = difflib.get_close_matches(password, content_list)
-        print('Yes, string found in file. ', result)
-    else:
-        print('String not found in file')        
+        
+    #my_file = open('rockyou.txt', "r", encoding="ISO-8859-1")
+    #content_list = my_file. readlines()
+    #print("largo: ", len(content_list))
+    
+    # Check if string 'is' is found in file 'sample.txt'
+    #if check_if_string_in_file('rockyou.txt', password):
+    #    result = difflib.get_close_matches(password, content_list)
+    #    print('Yes, string found in file. ', result)
+    #else:
+    #    print('String not found in file')        
    
 except:
         
