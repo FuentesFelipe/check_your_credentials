@@ -1,9 +1,34 @@
 import argparse
-import sys, mmap
-import difflib
+import sys
+#import difflib
 import requests
 import os
 from tqdm import tqdm
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+print( bcolors.OKGREEN + 
+""" 
+              _____ _               _     __   __                ______              
+             /  __ \ |             | |    \ \ / /                | ___ \            
+             | /  \/ |__   ___  ___| | __  \ V /___  _   _ _ __  | |_/ /_ _ ___ ___  
+             | |   | '_ \ / _ \/ __| |/ /   \ // _ \| | | | '__| |  __/ _` / __/ __| 
+             | \__/\ | | |  __/ (__|   <    | | (_) | |_| | |    | | | (_| \__ \__ \ 
+              \____/_| |_|\___|\___|_|\_\   \_/\___/ \__,_|_|    \_|  \__,_|___/___/ 
+                        
+                        By Felipe Fuentes - Universidad Tecnologica Metropolitana
+
+                                                                                    """) 
+
 
 try: 
     from googlesearch import search 
@@ -36,16 +61,6 @@ def download(url: str, dest_folder: str):
     else:  # HTTP status code 4XX/5XX
         print("Download failed: status code {}\n{}".format(r.status_code, r.text))
 
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
 def check_if_string_in_file(file_name, string_to_search):
     """ Check if any line in the file contains given string """
     # Open the file in read only mode
@@ -65,18 +80,22 @@ args = vars(parser.parse_args())
 password = args['pass']
 download_param = args['download']
 path_wordlist = "Wordlists"
-
+results = 0
 try:
 
     query = '"' + str(password) + '"wordlist" "filetype:txt'
 
     for j in search(query, tld="co.in", num=10, stop=10, pause=2): 
-        print(bcolors.OKGREEN + "URL ->",j) 
+        print(bcolors.OKBLUE + "URL ->",j) 
+        results += 1
+
         if download_param:
                 
             if j.find('/'):
                 filename = j.rsplit('/', 1)[1]
                 download(j, dest_folder=path_wordlist)
+
+    print('\n',"="*60,'\n',bcolors.HEADER + str(results),"diccionarios encontrados.",'\n')
     
         
     #my_file = open('rockyou.txt', "r", encoding="ISO-8859-1")
